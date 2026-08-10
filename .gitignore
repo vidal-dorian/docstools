@@ -26,3 +26,7 @@ dotnet-api-docs/
 node_modules/
 dist/
 build/
+=======
+__pycache__/
+*.pyc
+.pytest_cache/
