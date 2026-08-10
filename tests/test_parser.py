@@ -130,3 +130,64 @@ def test_load_type_is_replayable_for_the_same_type(tmp_path):
         assert count == 1
     finally:
         conn.close()
+
+
+def test_add_months_is_available_in_netframework_4x_and_modern_net(add_months_group):
+    # dotnet-api-docs n'expose plus, à la date du build, d'AssemblyInfo pour les
+    # monikers net-5.0/6.0/7.0 (versions .NET hors support, élaguées en amont) :
+    # on vérifie donc la famille "net-N.0 avec N >= 5", pas les monikers exacts.
+    monikers = {m for o in add_months_group.overloads for m in o.version.monikers}
+    assert "netframework-4.x" in monikers
+    net_monikers = {m for m in monikers if m.startswith("net-")}
+    assert net_monikers, "aucun moniker net-N.0 résolu pour AddMonths"
+    assert all(int(m.removeprefix("net-").split(".")[0]) >= 5 for m in net_monikers)
+
+
+def test_load_type_writes_overload_version_rows_for_add_months(tmp_path, datetime_type):
+    db_path = tmp_path / "index.sqlite"
+    create_schema(db_path)
+
+    conn = sqlite3.connect(db_path)
+    try:
+        load_type(conn, datetime_type)
+
+        rows = conn.execute(
+            """
+            SELECT v.moniker FROM overload_version ov
+            JOIN overload o ON o.id = ov.overload_id
+            JOIN member_group g ON g.id = o.group_id
+            JOIN version v ON v.id = ov.version_id
+            WHERE g.name = 'AddMonths'
+            """
+        ).fetchall()
+        monikers = {row[0] for row in rows}
+
+        assert "netframework-4.x" in monikers
+        assert any(m.startswith("net-") for m in monikers)
+    finally:
+        conn.close()
+
+
+def test_every_non_unknown_group_has_at_least_one_overload_version_row(tmp_path, datetime_type):
+    db_path = tmp_path / "index.sqlite"
+    create_schema(db_path)
+
+    conn = sqlite3.connect(db_path)
+    try:
+        load_type(conn, datetime_type)
+
+        groups_without_version_row = conn.execute(
+            """
+            SELECT g.id FROM member_group g
+            WHERE g.version_confidence != 'unknown'
+              AND NOT EXISTS (
+                SELECT 1 FROM overload o
+                JOIN overload_version ov ON ov.overload_id = o.id
+                WHERE o.group_id = g.id
+              )
+            """
+        ).fetchall()
+
+        assert groups_without_version_row == []
+    finally:
+        conn.close()
