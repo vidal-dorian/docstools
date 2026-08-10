@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Databases
+*.sqlite
+*.sqlite3
+*.db
+
+# .NET API docs clone
+dotnet-api-docs/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Node (web/)
+node_modules/
+dist/
+build/
