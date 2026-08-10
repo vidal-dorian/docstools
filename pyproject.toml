@@ -11,6 +11,7 @@ select = ["E", "F", "I", "UP"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 
 [tool.commitizen]
 name = "cz_conventional_commits"
