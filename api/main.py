@@ -40,7 +40,12 @@ def get_connection(db_path: str = Depends(get_db_path)) -> Iterator[sqlite3.Conn
     # même thread pour les deux appels — sqlite3 lève sinon une
     # ProgrammingError sur conn.close() (une seule connexion par requête,
     # jamais partagée entre threads concurrents, donc sans risque ici).
-    conn = sqlite3.connect(db_path, check_same_thread=False)
+    #
+    # mode=ro + PRAGMA query_only (spec §8) : l'API ne doit structurellement
+    # pas pouvoir corrompre l'index — la connexion refuse toute écriture même
+    # en cas de bug applicatif.
+    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, check_same_thread=False)
+    conn.execute("PRAGMA query_only = 1")
     try:
         yield conn
     finally:
