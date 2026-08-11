@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0](https://github.com/vidal-dorian/docstools/compare/docstools-v0.4.0...docstools-v0.5.0) (2026-08-11)
+
+
+### Features
+
+* **api:** endpoint POST /api/search et GET /api/versions (US-021) ([afb5ad1](https://github.com/vidal-dorian/docstools/commit/afb5ad10ba7175ee656c5e1dadcf2f071419f05c)), closes [#11](https://github.com/vidal-dorian/docstools/issues/11)
+* **api:** requête FTS5 en mode OU sur group_fts (US-020) ([e5087d0](https://github.com/vidal-dorian/docstools/commit/e5087d0883ae551fe7fbb3af0710cbeb3c2fcc76)), closes [#10](https://github.com/vidal-dorian/docstools/issues/10)
+
 ## [0.4.0](https://github.com/vidal-dorian/docstools/compare/docstools-v0.3.0...docstools-v0.4.0) (2026-08-11)
 
 
