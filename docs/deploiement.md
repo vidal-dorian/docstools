@@ -20,6 +20,28 @@ section 8, pour l'architecture générale.
 
 ---
 
+## Prérequis : cloner le dépôt sur le Pi
+
+Contrairement à `toolbox-prod` (dont le `docker-compose.yml` vit dans
+`infra/` et pointe vers un `repo/` cloné à part), le `docker-compose.yml`
+de DocsTools fait partie du dépôt lui-même : le clone **est** le dossier
+de déploiement, pas besoin de sous-dossier `repo/`.
+
+```bash
+cd /home/pi
+git clone https://github.com/vidal-dorian/docstools.git
+cd docstools
+```
+
+Toutes les commandes `docker compose ...` de cette page s'exécutent
+depuis `/home/pi/docstools/` (adapter le chemin si tu clones ailleurs —
+c'est simplement le dossier qui contient `docker-compose.yml`). C'est
+aussi là que doit se trouver `index.sqlite`, produit par le build (voir
+[`specification.md` §4](specification.md#4-pipeline-dingestion)) — à
+copier manuellement dans ce dossier avant le premier `docker compose up`.
+
+---
+
 ## Déploiement automatique (watchtower)
 
 `watchtower` ([`docker-compose.yml`](../docker-compose.yml)) surveille les
