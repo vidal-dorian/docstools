@@ -543,8 +543,20 @@ et l'étape 4, l'index reste valide, il n'y a rien à régénérer.
 
 Aucune décision ne doit être prise sur ces points avant mesure :
 
-- Nombre de types et de groupes après build complet
-- Répartition `explicit` / `inferred` / `unknown`
+- ~~Nombre de types et de groupes après build complet~~ — **mesuré (US-015),
+  parsing seul (hors embeddings, non encore implémentés) : 10 974 types,
+  97 129 groupes, 122 825 surcharges, sur les 10 974 fichiers `<Type>` du
+  dépôt `dotnet-api-docs` (hors `index.xml` et les 425 `ns-*.xml`).**
+- ~~Répartition `explicit` / `inferred` / `unknown`~~ — **mesuré (US-015) sur
+  le corpus complet : `explicit` 3,54 % (3 441), `inferred` 28,08 % (27 272),
+  `unknown` 68,38 % (66 416). Nettement plus élevé que sur l'échantillon des
+  5 types cœur du BCL (§4) : le mapping `AssemblyInfo` (§4) ne couvre que
+  `mscorlib`/`netstandard`/`System.Runtime`, alors que le corpus complet
+  s'appuie massivement sur d'autres assemblies (`PresentationCore`,
+  `System.Drawing.Common`, `System.Windows.Forms`, `WindowsBase`,
+  `System.ServiceModel`...) non mappées, donc classées `unknown`. Le mapping
+  n'est pas faux, juste incomplet — à étendre dans une US ultérieure si le
+  taux `unknown` s'avère gênant en usage.**
 - Taille de l'index avec et sans vecteurs
 - Durée du build sur le Pi 5
 - ~~Proportion de surcharges avec exemple de code inline~~ — **mesuré (US-014) :
