@@ -254,6 +254,26 @@ def _strip_cref(cref: str) -> str:
 
 
 def _delete_existing_type(conn: sqlite3.Connection, source_id: int, full_name: str) -> None:
+    # group_fts est contentless (content='') : impossible d'y faire un DELETE
+    # classique, il faut repasser par la commande spéciale 'delete' avec les
+    # valeurs déjà stockées pour que FTS5 retire correctement l'entrée.
+    fts_rows = conn.execute(
+        """
+        SELECT f.rowid, f.name, f.type_name, f.summary, f.params
+        FROM group_fts f
+        JOIN member_group g ON g.id = f.rowid
+        JOIN type t ON t.id = g.type_id
+        WHERE t.source_id = ? AND t.full_name = ?
+        """,
+        (source_id, full_name),
+    ).fetchall()
+    for row in fts_rows:
+        conn.execute(
+            "INSERT INTO group_fts (group_fts, rowid, name, type_name, summary, params) "
+            "VALUES ('delete', ?, ?, ?, ?, ?)",
+            row,
+        )
+
     conn.execute(
         """
         DELETE FROM overload_version WHERE overload_id IN (
@@ -284,6 +304,26 @@ def _delete_existing_type(conn: sqlite3.Connection, source_id: int, full_name: s
         (source_id, full_name),
     )
     conn.execute("DELETE FROM type WHERE source_id = ? AND full_name = ?", (source_id, full_name))
+
+
+def _fts_params(group: ParsedGroup) -> str:
+    """Noms de paramètres de toutes les surcharges du groupe, dédupliqués et
+    concaténés — alimente la colonne `params` de `group_fts` (US-016)."""
+    names = dict.fromkeys(
+        param.name for overload in group.overloads for param in overload.params if param.name
+    )
+    return " ".join(names)
+
+
+def optimize_fts(conn: sqlite3.Connection) -> None:
+    """Fusionne les segments FTS5 de `group_fts` (spec §4, étape 8).
+
+    À appeler une fois l'insertion terminée — pas après chaque type, ce
+    serait aussi coûteux qu'inutile sur un import de plusieurs milliers
+    d'entrées.
+    """
+    conn.execute("INSERT INTO group_fts (group_fts) VALUES ('optimize')")
+    conn.commit()
 
 
 def _get_or_create_source(conn: sqlite3.Connection, key: str) -> int:
@@ -350,6 +390,12 @@ def load_type(
             """,
             group_row,
         ).lastrowid
+
+        conn.execute(
+            "INSERT INTO group_fts (rowid, name, type_name, summary, params) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (group_id, group.name, parsed.full_name, group.summary, _fts_params(group)),
+        )
 
         for ordinal, overload in enumerate(group.overloads):
             overload_id = conn.execute(

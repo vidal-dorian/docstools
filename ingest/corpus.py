@@ -18,7 +18,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from ingest.parser import load_type, parse_type
+from ingest.parser import load_type, optimize_fts, parse_type
 from ingest.schema import DEFAULT_DB_PATH, create_schema
 
 DEFAULT_BATCH_SIZE = 2000
@@ -98,6 +98,7 @@ def main() -> None:
     conn = sqlite3.connect(db_path)
     try:
         stats = parse_corpus(Path(args.xml_root), conn, batch_size=args.batch_size)
+        optimize_fts(conn)
     finally:
         conn.close()
 
