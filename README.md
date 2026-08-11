@@ -5,7 +5,7 @@ DocsTools — outil de recherche rapide dans la documntation .NET, avec parsing 
 
 Les messages de commit suivent la convention [Conventional Commits](https://www.conventionalcommits.org/).
 Voir [CONTRIBUTING.md](CONTRIBUTING.md) pour le détail et la mise en place du hook local.
-=======
+
 ## Stratégie de branches
 
 Le projet suit un Git Flow simplifié :
@@ -30,10 +30,12 @@ La branche `main` est protégée sur GitHub :
 - Les checks de CI doivent être au vert avant fusion
 - Suppression de la branche interdite
 - Force-push interdit
-=======
+
 ## Documentation
 
 La spécification complète du projet se trouve dans [`docs/specification.md`](docs/specification.md).
+La procédure de déploiement (mise à jour du service, tunnel Cloudflare,
+retour arrière) se trouve dans [`docs/deploiement.md`](docs/deploiement.md).
 
 ## Structure du dépôt
 

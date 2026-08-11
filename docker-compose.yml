@@ -1,8 +1,12 @@
-# Déploiement DocsTools (US-050). Voir docs/specification.md, section 8.
+# Déploiement DocsTools (US-050, US-053). Voir docs/specification.md §8
+# et docs/deploiement.md pour la procédure complète.
 #
-# index.sqlite est produit hors compose par le build (ingest/), ~1×/an —
-# voir docs/deploiement.md (US-052). Monté en lecture seule : aucun volume
-# en écriture n'est requis pour le service.
+# index.sqlite est produit hors compose par le build (ingest/), ~1×/an.
+# Monté en lecture seule : aucun volume en écriture n'est requis pour le
+# service. cloudflared est l'unique point d'entrée public (aucun port n'est
+# publié sur l'hôte) — voir docs/deploiement.md pour la configuration
+# initiale du tunnel (CLOUDFLARE_TUNNEL_TOKEN, à placer dans un .env local,
+# jamais commité).
 
 services:
   api:
@@ -21,8 +25,17 @@ services:
     build:
       context: .
       dockerfile: docker/web.Dockerfile
-    ports:
-      - "8080:80"
+    expose:
+      - "80"
     depends_on:
       - api
+    restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?CLOUDFLARE_TUNNEL_TOKEN manquant — voir docs/deploiement.md}
+    depends_on:
+      - web
     restart: unless-stopped
