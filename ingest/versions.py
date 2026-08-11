@@ -101,8 +101,18 @@ def moniker_info(moniker: str) -> tuple[str, str, int]:
     """`(label, family, sort_order)` pour une entrée de la table `version`."""
     if moniker in _FIXED_MONIKERS:
         return _FIXED_MONIKERS[moniker]
-    major = int(moniker.removeprefix("net-").split(".")[0])
-    return (f".NET {major}", "netcore", 100 + major)
+
+    net_major = moniker.removeprefix("net-").split(".")[0]
+    if moniker.startswith("net-") and net_major.isdigit():
+        major = int(net_major)
+        return (f".NET {major}", "netcore", 100 + major)
+
+    # Moniker inattendu : les valeurs `FrameworkAlternate` (confiance
+    # 'explicit') viennent telles quelles du XML source et ne suivent pas
+    # toujours la table connue ni le format net-N.0 (ex. "netframework-4"
+    # sans ".x", observé sur le corpus complet). Pas de métadonnées
+    # connues, mais on ne doit jamais planter le build pour autant.
+    return (moniker, "unknown", 999)
 
 
 def get_or_create_version(conn: sqlite3.Connection, source_id: int, moniker: str) -> int:
