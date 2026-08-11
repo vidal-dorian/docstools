@@ -17,6 +17,9 @@ venv/
 # .NET API docs clone
 dotnet-api-docs/
 
+# Secrets locaux (docker compose --env-file .env)
+.env
+
 # Editors / OS
 .vscode/
 .idea/
@@ -26,7 +29,3 @@ dotnet-api-docs/
 node_modules/
 dist/
 build/
-=======
-__pycache__/
-*.pyc
-.pytest_cache/
