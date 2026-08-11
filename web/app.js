@@ -4,12 +4,14 @@
 const DEBOUNCE_MS = 300;
 const SEARCH_ENDPOINT = "/api/search";
 const VERSIONS_ENDPOINT = "/api/versions";
+const GROUP_ENDPOINT = "/api/group";
 const SUMMARY_MAX_LENGTH = 140;
 const VERSION_STORAGE_KEY = "docstools:version";
 
 const input = document.getElementById("search-input");
 const versionSelect = document.getElementById("version-select");
 const resultsEl = document.getElementById("results");
+const detailEl = document.getElementById("detail");
 
 let debounceTimer = null;
 let activeController = null;
@@ -116,6 +118,11 @@ function renderResultRow(result) {
   const li = document.createElement("li");
   li.className = "result";
 
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "result-button";
+  button.addEventListener("click", () => loadGroupDetail(result.group_id));
+
   const heading = document.createElement("div");
   heading.className = "result-heading";
 
@@ -131,20 +138,167 @@ function renderResultRow(result) {
     heading.appendChild(badge);
   }
 
-  li.appendChild(heading);
+  button.appendChild(heading);
 
   const summary = document.createElement("p");
   summary.className = "result-summary";
   summary.textContent = truncate(result.summary, SUMMARY_MAX_LENGTH);
-  li.appendChild(summary);
+  button.appendChild(summary);
 
   const overloadCount = document.createElement("span");
   overloadCount.className = "result-overload-count";
   overloadCount.textContent =
     result.overload_count === 1 ? "1 surcharge" : `${result.overload_count} surcharges`;
-  li.appendChild(overloadCount);
+  button.appendChild(overloadCount);
 
+  li.appendChild(button);
   return li;
+}
+
+async function loadGroupDetail(groupId) {
+  renderDetailLoading();
+
+  let response;
+  try {
+    response = await fetch(`${GROUP_ENDPOINT}/${groupId}`);
+  } catch {
+    renderDetailError();
+    return;
+  }
+
+  if (!response.ok) {
+    renderDetailError();
+    return;
+  }
+
+  const group = await response.json();
+  renderDetail(group);
+}
+
+function renderDetail(group) {
+  detailEl.replaceChildren();
+
+  const heading = document.createElement("h2");
+  heading.textContent = `${group.type}.${group.name}`;
+  detailEl.appendChild(heading);
+
+  const docLink = document.createElement("a");
+  docLink.href = group.doc_url;
+  docLink.target = "_blank";
+  docLink.rel = "noopener noreferrer";
+  docLink.className = "detail-doc-link";
+  docLink.textContent = "Voir sur learn.microsoft.com";
+  detailEl.appendChild(docLink);
+
+  for (const overload of group.overloads) {
+    detailEl.appendChild(renderOverload(overload));
+  }
+}
+
+function renderOverload(overload) {
+  const article = document.createElement("article");
+  article.className = "overload";
+
+  const signature = document.createElement("pre");
+  signature.className = "overload-signature";
+  signature.textContent = overload.signature;
+  article.appendChild(signature);
+
+  if (overload.params.length > 0) {
+    const paramsHeading = document.createElement("h3");
+    paramsHeading.textContent = "Paramètres";
+    article.appendChild(paramsHeading);
+
+    const paramsList = document.createElement("dl");
+    paramsList.className = "overload-params";
+    for (const param of overload.params) {
+      const dt = document.createElement("dt");
+      dt.textContent = `${param.name} — ${param.type}`;
+      const dd = document.createElement("dd");
+      dd.textContent = param.doc;
+      paramsList.appendChild(dt);
+      paramsList.appendChild(dd);
+    }
+    article.appendChild(paramsList);
+  }
+
+  if (overload.return_type) {
+    const returnsHeading = document.createElement("h3");
+    returnsHeading.textContent = "Retour";
+    article.appendChild(returnsHeading);
+
+    const returns = document.createElement("p");
+    returns.textContent = overload.returns_doc
+      ? `${overload.return_type} — ${overload.returns_doc}`
+      : overload.return_type;
+    article.appendChild(returns);
+  }
+
+  if (overload.exceptions.length > 0) {
+    const exceptionsHeading = document.createElement("h3");
+    exceptionsHeading.textContent = "Exceptions";
+    article.appendChild(exceptionsHeading);
+
+    const exceptionsList = document.createElement("ul");
+    exceptionsList.className = "overload-exceptions";
+    for (const exception of overload.exceptions) {
+      const li = document.createElement("li");
+      li.textContent = `${exception.type} — ${exception.doc}`;
+      exceptionsList.appendChild(li);
+    }
+    article.appendChild(exceptionsList);
+  }
+
+  if (overload.versions.length > 0) {
+    const versionsHeading = document.createElement("h3");
+    versionsHeading.textContent = "Disponibilité par version";
+    article.appendChild(versionsHeading);
+    article.appendChild(renderVersionTable(overload.versions));
+  }
+
+  return article;
+}
+
+function renderVersionTable(versions) {
+  const table = document.createElement("table");
+  table.className = "overload-versions";
+
+  const headRow = document.createElement("tr");
+  for (const label of ["Version", "Statut"]) {
+    const th = document.createElement("th");
+    th.textContent = label;
+    headRow.appendChild(th);
+  }
+  table.appendChild(headRow);
+
+  for (const version of versions) {
+    const row = document.createElement("tr");
+    const label = document.createElement("td");
+    label.textContent = version.label;
+    const status = document.createElement("td");
+    status.textContent = version.status;
+    row.appendChild(label);
+    row.appendChild(status);
+    table.appendChild(row);
+  }
+
+  return table;
+}
+
+function renderDetailLoading() {
+  detailEl.replaceChildren();
+  const p = document.createElement("p");
+  p.className = "detail-placeholder";
+  p.textContent = "Chargement…";
+  detailEl.appendChild(p);
+}
+
+function renderDetailError() {
+  detailEl.replaceChildren();
+  const p = document.createElement("p");
+  p.className = "detail-placeholder detail-error";
+  p.textContent = "Impossible de charger le détail. Réessayez.";
+  detailEl.appendChild(p);
 }
 
 function truncate(text, maxLength) {
