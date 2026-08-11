@@ -1,9 +1,10 @@
+import json
 import sqlite3
 from pathlib import Path
 
 import pytest
 
-from ingest.parser import load_type, parse_type
+from ingest.parser import ParsedException, ParsedParam, load_type, parse_type
 from ingest.schema import create_schema
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "System.DateTime.xml"
@@ -76,6 +77,70 @@ def test_see_and_paramref_are_flattened_to_readable_text(add_months_group):
     assert "months" in overload.returns_doc
 
 
+def test_params_json_has_name_type_and_doc_for_each_parameter(add_months_group):
+    overload = add_months_group.overloads[0]
+
+    assert overload.params == [
+        ParsedParam(
+            name="months",
+            type="System.Int32",
+            doc="A number of months. The months parameter can be negative or positive.",
+        )
+    ]
+
+
+def test_returns_doc_and_return_type_are_set_when_present(add_months_group):
+    overload = add_months_group.overloads[0]
+
+    assert overload.return_type == "System.DateTime"
+    assert overload.returns_doc == (
+        "An object whose value is the sum of the date and time represented "
+        "by this instance and months."
+    )
+
+
+def test_returns_doc_and_return_type_are_absent_for_a_constructor(datetime_type):
+    ctor_group = next(g for g in datetime_type.groups if g.name == ".ctor")
+    overload = ctor_group.overloads[0]
+
+    # Un constructeur n'a ni <ReturnValue> ni <returns> dans l'ECMAXML.
+    assert overload.return_type is None
+    assert overload.returns_doc is None
+
+
+def test_exceptions_json_has_type_and_doc(add_months_group):
+    overload = add_months_group.overloads[0]
+
+    assert overload.exceptions == [
+        ParsedException(
+            type="ArgumentOutOfRangeException",
+            doc=(
+                "The resulting DateTime is less than DateTime.MinValue or "
+                "greater than DateTime.MaxValue. -or- months is less than "
+                "-120,000 or greater than 120,000."
+            ),
+        )
+    ]
+
+
+def test_remarks_md_is_captured_when_the_markdown_block_exists(add_months_group):
+    overload = add_months_group.overloads[0]
+
+    assert overload.remarks_md is not None
+    assert overload.remarks_md.startswith("## Remarks")
+    assert "does not change the value of this" in overload.remarks_md
+    # Les xref restent en Markdown brut : remarks_md n'est pas aplati comme
+    # summary/returns/param (spec §4 — seul le format markdown est capturé tel quel).
+    assert "<xref:System.DateTime>" in overload.remarks_md
+
+
+def test_remarks_md_is_null_not_empty_string_when_no_remarks_block_exists():
+    parsed = parse_type(NO_CS_SIGNATURE_XML)
+    do_thing = next(g for g in parsed.groups if g.name == "DoThing")
+
+    assert do_thing.overloads[0].remarks_md is None
+
+
 def test_member_without_cs_signature_is_ignored_not_crashed():
     parsed = parse_type(NO_CS_SIGNATURE_XML)
 
@@ -110,6 +175,39 @@ def test_load_type_writes_type_member_group_and_overload_rows(tmp_path):
             "SELECT signature, doc_id FROM overload"
         ).fetchone()
         assert overload_row == ("public void DoThing ();", "M:System.Widget.DoThing")
+    finally:
+        conn.close()
+
+
+def test_load_type_serializes_params_and_exceptions_as_json(tmp_path, datetime_type):
+    db_path = tmp_path / "index.sqlite"
+    create_schema(db_path)
+
+    conn = sqlite3.connect(db_path)
+    try:
+        load_type(conn, datetime_type)
+
+        row = conn.execute(
+            """
+            SELECT o.params_json, o.exceptions_json, o.remarks_md, o.returns_doc, o.return_type
+            FROM overload o
+            JOIN member_group g ON g.id = o.group_id
+            WHERE g.name = 'AddMonths'
+            """
+        ).fetchone()
+        params_json, exceptions_json, remarks_md, returns_doc, return_type = row
+
+        assert json.loads(params_json) == [
+            {
+                "name": "months",
+                "type": "System.Int32",
+                "doc": "A number of months. The months parameter can be negative or positive.",
+            }
+        ]
+        assert json.loads(exceptions_json)[0]["type"] == "ArgumentOutOfRangeException"
+        assert remarks_md is not None and remarks_md.startswith("## Remarks")
+        assert return_type == "System.DateTime"
+        assert returns_doc is not None
     finally:
         conn.close()
 
