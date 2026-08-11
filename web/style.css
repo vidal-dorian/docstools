@@ -188,6 +188,55 @@ header h1 {
   padding-left: 1.1rem;
 }
 
+.overload-remarks {
+  font-size: 0.95rem;
+}
+
+.overload-remarks p {
+  margin: 0 0 0.6rem;
+}
+
+.overload-remarks blockquote {
+  margin: 0 0 0.6rem;
+  padding: 0.4rem 0.75rem;
+  border-left: 3px solid var(--border);
+  opacity: 0.85;
+}
+
+.overload-remarks table {
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin: 0 0 0.6rem;
+}
+
+.overload-remarks th,
+.overload-remarks td {
+  border: 1px solid var(--border);
+  padding: 0.25rem 0.6rem;
+  text-align: left;
+}
+
+.overload-remarks code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.9em;
+}
+
+.overload-remarks ul,
+.overload-remarks ol {
+  margin: 0 0 0.6rem;
+  padding-left: 1.2rem;
+}
+
+.overload-example {
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: color-mix(in srgb, currentColor 6%, transparent);
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.4rem;
+}
+
 .overload-versions {
   border-collapse: collapse;
   font-size: 0.85rem;
