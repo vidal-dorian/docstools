@@ -1,9 +1,9 @@
-"""Parsing ECMAXML → tables `type` / `member_group` / `overload` (US-011).
+"""Parsing ECMAXML → tables `type` / `member_group` / `overload` (US-011)
+et résolution des versions → `overload_version` (US-012).
 
 Un seul fichier `xml/<Namespace>/<Type>.xml` à la fois — voir
-docs/specification.md, section 4. La résolution de version (US-012) et le
-parcours du corpus complet (US-015) sont hors périmètre : chaque groupe est
-inséré avec `version_confidence = 'unknown'`.
+docs/specification.md, section 4. Le parcours du corpus complet (US-015)
+est hors périmètre.
 
 Exécutable directement : `python -m ingest.parser <xml_path> [db_path]`
 """
@@ -19,6 +19,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from ingest.schema import DEFAULT_DB_PATH, create_schema
+from ingest.versions import (
+    VersionResolution,
+    get_or_create_version,
+    group_confidence,
+    resolve_member_versions,
+)
 
 _KIND_KEYWORDS = ("class", "struct", "interface", "enum", "delegate")
 _CREF_PREFIX_RE = re.compile(r"^[A-Za-z]+:")
@@ -48,6 +54,7 @@ class ParsedOverload:
     params: list[ParsedParam]
     exceptions: list[ParsedException]
     remarks_md: str | None
+    version: VersionResolution
 
 
 @dataclass
@@ -63,6 +70,10 @@ class ParsedGroup:
     @property
     def is_static(self) -> bool:
         return any(_is_static_signature(o.signature) for o in self.overloads)
+
+    @property
+    def version_confidence(self) -> str:
+        return group_confidence([o.version for o in self.overloads])
 
 
 @dataclass
@@ -92,8 +103,8 @@ def parse_type(xml_text: str) -> ParsedType:
     members_elem = root.find("Members")
     if members_elem is not None:
         for member in members_elem.findall("Member"):
-            signature = _cs_signature(member)
-            if not signature:
+            cs_signature_elem = _member_signature_element(member, "C#")
+            if cs_signature_elem is None:
                 # Membre sans signature C# — ignoré, pas planté.
                 continue
 
@@ -101,7 +112,7 @@ def parse_type(xml_text: str) -> ParsedType:
             if key not in groups:
                 groups[key] = ParsedGroup(name=key[0], kind=key[1])
                 order.append(key)
-            groups[key].overloads.append(_parse_overload(member, signature))
+            groups[key].overloads.append(_parse_overload(member, cs_signature_elem))
 
     return ParsedType(
         namespace=namespace,
@@ -113,10 +124,10 @@ def parse_type(xml_text: str) -> ParsedType:
     )
 
 
-def _parse_overload(member: ET.Element, signature: str) -> ParsedOverload:
+def _parse_overload(member: ET.Element, cs_signature_elem: ET.Element) -> ParsedOverload:
     docs = member.find("Docs")
     return ParsedOverload(
-        signature=signature,
+        signature=cs_signature_elem.get("Value", ""),
         doc_id=_member_signature(member, "DocId") or "",
         summary=_flatten_text(docs.find("summary")) if docs is not None else "",
         returns_doc=_flatten_optional(docs, "returns") if docs is not None else None,
@@ -124,17 +135,19 @@ def _parse_overload(member: ET.Element, signature: str) -> ParsedOverload:
         params=_parse_params(member, docs),
         exceptions=_parse_exceptions(docs),
         remarks_md=_remarks_md(docs),
+        version=resolve_member_versions(member, cs_signature_elem),
     )
 
 
-def _cs_signature(member: ET.Element) -> str | None:
-    return _member_signature(member, "C#")
-
-
 def _member_signature(member: ET.Element, language: str) -> str | None:
+    elem = _member_signature_element(member, language)
+    return elem.get("Value") if elem is not None else None
+
+
+def _member_signature_element(member: ET.Element, language: str) -> ET.Element | None:
     for sig in member.findall("MemberSignature"):
         if sig.get("Language") == language:
-            return sig.get("Value")
+            return sig
     return None
 
 
@@ -243,6 +256,17 @@ def _strip_cref(cref: str) -> str:
 def _delete_existing_type(conn: sqlite3.Connection, source_id: int, full_name: str) -> None:
     conn.execute(
         """
+        DELETE FROM overload_version WHERE overload_id IN (
+            SELECT overload.id FROM overload
+            JOIN member_group ON member_group.id = overload.group_id
+            JOIN type ON type.id = member_group.type_id
+            WHERE type.source_id = ? AND type.full_name = ?
+        )
+        """,
+        (source_id, full_name),
+    )
+    conn.execute(
+        """
         DELETE FROM overload WHERE group_id IN (
             SELECT member_group.id FROM member_group
             JOIN type ON type.id = member_group.type_id
@@ -306,19 +330,20 @@ def load_type(conn: sqlite3.Connection, parsed: ParsedType, source_key: str = "d
             int(group.is_static),
             len(group.overloads),
             group_doc_url,
+            group.version_confidence,
         )
         group_id = conn.execute(
             """
             INSERT INTO member_group
                 (type_id, name, kind, summary, is_static,
                  overload_count, doc_url, version_confidence)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'unknown')
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             group_row,
         ).lastrowid
 
         for ordinal, overload in enumerate(group.overloads):
-            conn.execute(
+            overload_id = conn.execute(
                 """
                 INSERT INTO overload
                     (group_id, signature, doc_id, summary, returns_doc, return_type,
@@ -338,7 +363,15 @@ def load_type(conn: sqlite3.Connection, parsed: ParsedType, source_key: str = "d
                     group_doc_url,
                     ordinal,
                 ),
-            )
+            ).lastrowid
+
+            for moniker in overload.version.monikers:
+                version_id = get_or_create_version(conn, source_id, moniker)
+                conn.execute(
+                    "INSERT OR IGNORE INTO overload_version (overload_id, version_id) "
+                    "VALUES (?, ?)",
+                    (overload_id, version_id),
+                )
 
     conn.commit()
     return type_id
