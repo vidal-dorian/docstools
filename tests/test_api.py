@@ -33,6 +33,17 @@ def sample_db_path(tmp_path_factory):
 
 
 @pytest.fixture
+def add_months_group_id(sample_db_path):
+    conn = sqlite3.connect(sample_db_path)
+    try:
+        return conn.execute(
+            "SELECT id FROM member_group WHERE name = 'AddMonths'"
+        ).fetchone()[0]
+    finally:
+        conn.close()
+
+
+@pytest.fixture
 def client(sample_db_path):
     def override_get_connection():
         conn = sqlite3.connect(sample_db_path)
@@ -151,3 +162,71 @@ def test_list_versions_returns_known_monikers(client):
     assert "net-8.0" in monikers
     for version in response.json():
         assert set(version.keys()) == {"moniker", "label", "family"}
+
+
+def test_get_group_returns_all_overloads_with_typed_params(client, add_months_group_id):
+    response = client.get(f"/api/group/{add_months_group_id}")
+    assert response.status_code == 200
+
+    body = response.json()
+    assert body["group_id"] == add_months_group_id
+    assert body["name"] == "AddMonths"
+    assert body["type"] == "DateTime"
+    assert body["namespace"] == "System"
+
+    # AddMonths n'a qu'une seule surcharge dans la fixture réelle.
+    assert len(body["overloads"]) == 1
+    overload = body["overloads"][0]
+    assert overload["signature"] == "public DateTime AddMonths (int months);"
+    assert overload["params"] == [
+        {
+            "name": "months",
+            "type": "System.Int32",
+            "doc": "A number of months. The months parameter can be negative or positive.",
+        }
+    ]
+    assert overload["exceptions"][0]["type"] == "ArgumentOutOfRangeException"
+    assert overload["remarks_md"] is not None
+    assert overload["return_type"] == "System.DateTime"
+
+
+def test_get_group_returns_version_coverage_joined_to_version_table(
+    client, add_months_group_id
+):
+    response = client.get(f"/api/group/{add_months_group_id}")
+    versions = response.json()["overloads"][0]["versions"]
+
+    assert versions, "aucune couverture de version pour AddMonths"
+    monikers = {v["moniker"] for v in versions}
+    assert "netframework-4.x" in monikers
+    assert "net-8.0" in monikers
+    for coverage in versions:
+        assert set(coverage.keys()) == {"moniker", "label", "family", "status"}
+        assert coverage["status"] == "present"
+
+
+def test_get_group_returns_404_for_an_unknown_id(client):
+    response = client.get("/api/group/999999999")
+    assert response.status_code == 404
+
+
+def test_get_group_multi_overload_group_returns_every_overload(client, sample_db_path):
+    conn = sqlite3.connect(sample_db_path)
+    try:
+        ctor_group_id = conn.execute(
+            """
+            SELECT g.id FROM member_group g
+            JOIN type t ON t.id = g.type_id
+            WHERE g.name = '.ctor' AND t.name = 'DateTime' AND g.overload_count > 1
+            """
+        ).fetchone()[0]
+    finally:
+        conn.close()
+
+    response = client.get(f"/api/group/{ctor_group_id}")
+    body = response.json()
+    assert len(body["overloads"]) > 1
+    # ordonnées par `ordinal`
+    assert [o["overload_id"] for o in body["overloads"]] == sorted(
+        o["overload_id"] for o in body["overloads"]
+    )
