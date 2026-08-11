@@ -1,0 +1,50 @@
+name: Docker Publish
+
+# US-051 : construit et publie les images api/web à chaque merge sur main.
+# Ne se déclenche jamais sur pull_request — voir docs/specification.md §8.
+on:
+  push:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - image: api
+            dockerfile: docker/api.Dockerfile
+          - image: web
+            dockerfile: docker/web.Dockerfile
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository }}-${{ matrix.image }}:latest
+            ${{ env.REGISTRY }}/${{ github.repository }}-${{ matrix.image }}:${{ github.sha }}
