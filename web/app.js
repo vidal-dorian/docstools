@@ -1,5 +1,8 @@
-// Panneau de résultats (US-030) et sélecteur de version persistant (US-031).
+// Panneau de résultats (US-030), sélecteur de version persistant (US-031)
+// et panneau de détail avec remarks/exemple (US-032, US-033).
 // Voir docs/specification.md, section 7 — pas de framework, page statique.
+
+import { renderRemarksMarkdown } from "./markdown.js";
 
 const DEBOUNCE_MS = 300;
 const SEARCH_ENDPOINT = "/api/search";
@@ -247,6 +250,39 @@ function renderOverload(overload) {
       exceptionsList.appendChild(li);
     }
     article.appendChild(exceptionsList);
+  }
+
+  const remarksHtml = overload.remarks_md ? renderRemarksMarkdown(overload.remarks_md).trim() : "";
+  if (remarksHtml) {
+    const remarksHeading = document.createElement("h3");
+    remarksHeading.textContent = "Remarques";
+    article.appendChild(remarksHeading);
+
+    const remarksEl = document.createElement("div");
+    remarksEl.className = "overload-remarks";
+    // renderRemarksMarkdown() échappe tout le texte source avant de générer
+    // ses propres balises : pas de contenu utilisateur non maîtrisé ici.
+    remarksEl.innerHTML = remarksHtml;
+    article.appendChild(remarksEl);
+  }
+
+  const exampleHeading = document.createElement("h3");
+  exampleHeading.textContent = "Exemple";
+  article.appendChild(exampleHeading);
+  if (overload.example_code) {
+    const example = document.createElement("pre");
+    example.className = "overload-example";
+    example.textContent = overload.example_code;
+    article.appendChild(example);
+  } else {
+    // Aucun exemple inline disponible (US-014) : un lien remplace la
+    // section plutôt que de l'afficher vide.
+    const link = document.createElement("a");
+    link.href = overload.doc_url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = "Voir un exemple sur learn.microsoft.com";
+    article.appendChild(link);
   }
 
   if (overload.versions.length > 0) {

@@ -35,7 +35,12 @@ def get_db_path() -> str:
 
 
 def get_connection(db_path: str = Depends(get_db_path)) -> Iterator[sqlite3.Connection]:
-    conn = sqlite3.connect(db_path)
+    # check_same_thread=False : FastAPI exécute l'entrée et la sortie de cette
+    # dépendance générateur via anyio.to_thread.run_sync, sans garantir le
+    # même thread pour les deux appels — sqlite3 lève sinon une
+    # ProgrammingError sur conn.close() (une seule connexion par requête,
+    # jamais partagée entre threads concurrents, donc sans risque ici).
+    conn = sqlite3.connect(db_path, check_same_thread=False)
     try:
         yield conn
     finally:
