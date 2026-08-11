@@ -5,18 +5,53 @@ sur le Raspberry Pi. Voir [`docs/specification.md`](specification.md),
 section 8, pour l'architecture générale.
 
 **Explicitement hors périmètre :**
-- **Pas de déploiement automatique déclenché depuis GitHub.** Le pipeline
-  CI ([`docker-publish.yml`](../.github/workflows/docker-publish.yml))
+- **Aucun accès entrant vers le Pi déclenché depuis GitHub, aucun secret
+  SSH côté GitHub.** Le pipeline CI
+  ([`docker-publish.yml`](../.github/workflows/docker-publish.yml))
   construit et publie les images sur GitHub Container Registry à chaque
-  merge sur `main`, mais rien ne les déploie automatiquement sur le Pi —
-  cette étape reste manuelle, décrite ci-dessous.
-- **Le Pi n'est pas exposé en SSH.** Toute opération sur le Pi (mise à
-  jour, configuration) se fait en local (clavier/écran, ou accès
-  physique/console de confiance), jamais via un accès distant automatisé.
+  merge sur `main`. Le déploiement effectif est **automatique mais
+  pull-based** : c'est `watchtower`, sur le Pi, qui va chercher les
+  nouvelles images (voir ci-dessous) — GitHub ne pousse jamais rien vers
+  le Pi et n'a besoin d'aucun identifiant pour y accéder.
+- **Le Pi n'est pas exposé en SSH.** Toute opération manuelle sur le Pi
+  (configuration initiale, dépannage) se fait en local (clavier/écran, ou
+  accès physique/console de confiance), jamais via un accès distant
+  automatisé.
 
 ---
 
-## Mise à jour du service
+## Déploiement automatique (watchtower)
+
+`watchtower` ([`docker-compose.yml`](../docker-compose.yml)) surveille les
+images `ghcr.io/vidal-dorian/docstools-{api,web}:latest` toutes les 5
+minutes et redéploie `api`/`web` dès qu'une nouvelle version est publiée —
+donc, en pratique, quelques minutes après chaque merge sur `main`. Il est
+scopé aux seuls conteneurs portant le label
+`com.centurylinklabs.watchtower.enable=true` (`api`, `web`) : il ne touche
+pas aux autres sites du Pi ni à `infra/` (nginx, cloudflared).
+
+**Configuration initiale (une seule fois), sur le Pi :**
+
+1. Rendre publics les packages GHCR du dépôt (`docstools-api`,
+   `docstools-web` — Settings du package sur GitHub, « Change visibility »)
+   pour que le Pi puisse les tirer sans identifiants à gérer. Ces images ne
+   contiennent que du code, aucune donnée (`index.sqlite` est monté en
+   volume, jamais dans l'image) : les rendre publiques n'expose rien de
+   sensible.
+   Si tu préfères les garder privées, exécute une fois sur le Pi
+   `docker login ghcr.io -u <user>` (jeton `read:packages`), puis monte le
+   fichier de credentials dans le service `watchtower` (voir
+   [doc watchtower](https://containrrr.dev/watchtower/private-registries/)).
+2. `docker compose up -d` dans `/home/pi/docstools/` (démarre `api`, `web`
+   et `watchtower`).
+
+Le reste de cette page (mise à jour manuelle, exposition publique, retour
+arrière) reste utile pour la configuration initiale, le dépannage, ou pour
+forcer une mise à jour immédiate sans attendre watchtower.
+
+---
+
+## Mise à jour manuelle (dépannage / première installation)
 
 À exécuter directement sur le Pi, dans le dossier du projet.
 
@@ -78,8 +113,8 @@ conteneur sur ce réseau.
    `http://reverse-proxy:80` (même cible que les routes existantes — c'est
    nginx, pas chaque site, que le tunnel connaît ; nginx route ensuite par
    `server_name`).
-4. `docker compose up -d` dans `/home/pi/docstools/` (démarre `api` et
-   `web`, les rattache à `proxy-net`).
+4. `docker compose up -d` dans `/home/pi/docstools/` (démarre `api`, `web`
+   et `watchtower`, rattache `web` à `proxy-net`).
 
 ### Vérification (US-053)
 
