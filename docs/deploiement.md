@@ -52,13 +52,22 @@ rien à installer avec `pip`.
 Départ : `/home/pi`.
 
 ```bash
-# 1. Cloner le dépôt de documentation source (dépôt froid, supprimable
-#    après le build) — clone superficiel, plusieurs Go quand même.
+# Cloner le dépôt de documentation source (dépôt froid, supprimable
+# après le build) — clone superficiel, plusieurs Go quand même.
 cd /home/pi
 git clone --depth 1 https://github.com/dotnet/dotnet-api-docs.git
+```
 
-# 2. Lancer le build depuis le dossier DocsTools (pour que
-#    `python3 -m ingest.corpus` trouve le package ingest/).
+Puis, depuis `/home/pi/docstools` (pour que `python3 -m ingest.corpus`
+trouve le package `ingest/`), lancer le build en tâche de fond. Deux
+façons équivalentes — `tmux` s'il est installé, sinon `nohup` (toujours
+disponible, sans rien à installer) :
+
+**Avec `tmux`** (permet de se détacher puis se rattacher pour suivre la
+progression) :
+
+```bash
+# Si tmux n'est pas installé : sudo apt-get update && sudo apt-get install -y tmux
 cd /home/pi/docstools
 tmux new -s docstools-build
 nice -n 19 python3 -m ingest.corpus \
@@ -66,6 +75,17 @@ nice -n 19 python3 -m ingest.corpus \
   /home/pi/docstools/index.sqlite
 # Ctrl+B puis D pour détacher tmux ; `tmux attach -t docstools-build`
 # pour revenir suivre la progression.
+```
+
+**Avec `nohup`** (pas d'installation requise) :
+
+```bash
+cd /home/pi/docstools
+nohup nice -n 19 python3 -m ingest.corpus \
+  /home/pi/dotnet-api-docs/xml \
+  /home/pi/docstools/index.sqlite \
+  > build.log 2>&1 &
+# `tail -f build.log` depuis /home/pi/docstools pour suivre la progression.
 ```
 
 À la fin, la commande affiche le nombre de types/groupes/surcharges et la
