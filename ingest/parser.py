@@ -294,8 +294,17 @@ def _get_or_create_source(conn: sqlite3.Connection, key: str) -> int:
     return cursor.lastrowid
 
 
-def load_type(conn: sqlite3.Connection, parsed: ParsedType, source_key: str = "dotnet") -> int:
-    """Insère un `ParsedType` dans la base ouverte `conn`. Retourne l'id du type."""
+def load_type(
+    conn: sqlite3.Connection,
+    parsed: ParsedType,
+    source_key: str = "dotnet",
+    commit: bool = True,
+) -> int:
+    """Insère un `ParsedType` dans la base ouverte `conn`. Retourne l'id du type.
+
+    `commit=False` laisse la transaction ouverte — utilisé par le parcours du
+    corpus complet (US-015) pour committer par lots plutôt qu'à chaque type.
+    """
     source_id = _get_or_create_source(conn, source_key)
 
     # Remplace un import précédent du même type plutôt que d'échouer sur les
@@ -373,7 +382,8 @@ def load_type(conn: sqlite3.Connection, parsed: ParsedType, source_key: str = "d
                     (overload_id, version_id),
                 )
 
-    conn.commit()
+    if commit:
+        conn.commit()
     return type_id
 
 
