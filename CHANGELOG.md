@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.5.0](https://github.com/vidal-dorian/docstools/compare/docstools-v0.4.0...docstools-v0.5.0) (2026-08-11)
+
+
+### Features
+
+* **api:** endpoint GET /api/group/{id} (US-022) ([98b2f3c](https://github.com/vidal-dorian/docstools/commit/98b2f3c2fac0d68c977c770058d2e6966b81c7e3)), closes [#12](https://github.com/vidal-dorian/docstools/issues/12)
+* **api:** endpoint POST /api/search et GET /api/versions (US-021) ([afb5ad1](https://github.com/vidal-dorian/docstools/commit/afb5ad10ba7175ee656c5e1dadcf2f071419f05c)), closes [#11](https://github.com/vidal-dorian/docstools/issues/11)
+* **api:** filtre de version côté /api/search (US-023) ([ac04505](https://github.com/vidal-dorian/docstools/commit/ac04505c94daa8a0f9a6e6be654cc03ea73a6b27)), closes [#13](https://github.com/vidal-dorian/docstools/issues/13)
+* **api:** requête FTS5 en mode OU sur group_fts (US-020) ([e5087d0](https://github.com/vidal-dorian/docstools/commit/e5087d0883ae551fe7fbb3af0710cbeb3c2fcc76)), closes [#10](https://github.com/vidal-dorian/docstools/issues/10)
+* **web:** panneau de détail au clic sur un résultat (US-032) ([be88957](https://github.com/vidal-dorian/docstools/commit/be88957f1e46046e9bf42c0471bfc877639da377)), closes [#16](https://github.com/vidal-dorian/docstools/issues/16)
+* **web:** panneau de résultats avec recherche debouncée (US-030) ([2c12a38](https://github.com/vidal-dorian/docstools/commit/2c12a38564705224a6854cd0dd48abf57a3d43ae)), closes [#14](https://github.com/vidal-dorian/docstools/issues/14)
+* **web:** sélecteur de version persistant (US-031) ([73aec73](https://github.com/vidal-dorian/docstools/commit/73aec737c344f9d9dc9dd96b5260a4a2eaf6478a)), closes [#15](https://github.com/vidal-dorian/docstools/issues/15)
+
 ## [0.4.0](https://github.com/vidal-dorian/docstools/compare/docstools-v0.3.0...docstools-v0.4.0) (2026-08-11)
 
 
