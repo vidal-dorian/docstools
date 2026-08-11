@@ -37,37 +37,55 @@ ensuite depuis un navigateur que la recherche fonctionne réellement
 
 ---
 
-## Configuration initiale du tunnel Cloudflare (une seule fois)
+## Exposition publique (nginx + tunnel Cloudflare mutualisés)
 
-Le `web` (nginx, reverse proxy devant `api` — voir
-[`docker/nginx.conf`](../docker/nginx.conf)) n'est pas exposé directement :
-aucun port n'est publié sur l'hôte pour `api` ni pour `web`
-([`docker-compose.yml`](../docker-compose.yml)). Le seul point d'entrée
-public est le conteneur `cloudflared`, qui établit un tunnel sortant vers
-Cloudflare — pas besoin d'ouvrir de port sur la box.
+Le reverse proxy nginx et le tunnel Cloudflare **ne sont pas propres à
+DocsTools** : ils sont mutualisés sur le Pi, dans `/home/pi/infra/`
+(hors de ce dépôt), et servent déjà d'autres sites (même principe que
+`toolbox-prod`, `HikeWorld`, etc.). DocsTools ne fait que s'y brancher :
 
-1. Dans le [dashboard Cloudflare Zero Trust](https://one.dash.cloudflare.com/)
-   → **Networks → Tunnels → Create a tunnel** (type *Cloudflared*).
-2. Nommer le tunnel (ex. `docstools`), choisir **Docker** comme méthode
-   d'installation : Cloudflare affiche une commande contenant un token —
-   copier uniquement la valeur du token (après `--token`).
-3. Créer un fichier `.env` à la racine du projet sur le Pi (jamais commité,
-   voir `.env.example`) :
+```
+/home/pi/infra/
+├── docker-compose.yml       # nginx (reverse-proxy) + cloudflared, réseau proxy-net
+└── nginx/conf.d/
+    ├── toolbox-prod.conf
+    └── docstools.conf       # ← à ajouter, voir ci-dessous
+
+/home/pi/docstools/           # ce dépôt, cloné sur le Pi
+└── docker-compose.yml        # services api + web, web rejoint proxy-net
+```
+
+`web` ([`docker-compose.yml`](../docker-compose.yml)) rejoint le réseau
+externe `proxy-net` (créé par `infra/docker-compose.yml`, déjà en cours
+d'exécution) sous le nom `docstools_web`, exactement comme
+`toolbox_prod_web` pour `toolbox-prod`. Aucun port n'est publié sur
+l'hôte : le nginx partagé atteint `web` directement par son nom de
+conteneur sur ce réseau.
+
+### Configuration initiale (une seule fois)
+
+1. Copier [`docker/infra-nginx-docstools.conf.example`](../docker/infra-nginx-docstools.conf.example)
+   vers `/home/pi/infra/nginx/conf.d/docstools.conf` (ajuster le
+   sous-domaine si besoin — `docstools.dorianvidal.com` par défaut).
+2. Recharger le nginx partagé :
+   ```bash
+   cd /home/pi/infra && docker compose exec nginx nginx -s reload
    ```
-   CLOUDFLARE_TUNNEL_TOKEN=<le token copié à l'étape 2>
-   ```
-4. Toujours dans le dashboard, onglet **Public Hostname** du tunnel :
-   ajouter un hostname sur un sous-domaine de `dorianvidal.com`
-   (ex. `docstools.dorianvidal.com`), type `HTTP`, service pointant vers
-   `web:80` (nom du service Docker Compose, résolu sur le réseau interne
-   `docstools_default`).
-5. `docker compose up -d` (relit `.env`, démarre `cloudflared`).
+3. Dans le [dashboard Cloudflare Zero Trust](https://one.dash.cloudflare.com/)
+   → **Networks → Tunnels**, ouvrir le tunnel déjà utilisé par les autres
+   sites → onglet **Public Hostname** → ajouter un hostname
+   `docstools.dorianvidal.com`, type `HTTP`, service
+   `http://reverse-proxy:80` (même cible que les routes existantes — c'est
+   nginx, pas chaque site, que le tunnel connaît ; nginx route ensuite par
+   `server_name`).
+4. `docker compose up -d` dans `/home/pi/docstools/` (démarre `api` et
+   `web`, les rattache à `proxy-net`).
 
 ### Vérification (US-053)
 
 Depuis un réseau **différent** du réseau local (4G, VPN externe, etc.),
-ouvrir `https://<sous-domaine choisi>.dorianvidal.com` et confirmer qu'une
-recherche renvoie des résultats.
+ouvrir `https://docstools.dorianvidal.com` (ou le sous-domaine choisi) et
+confirmer qu'une recherche renvoie des résultats.
 
 ---
 

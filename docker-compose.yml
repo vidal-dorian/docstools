@@ -3,10 +3,12 @@
 #
 # index.sqlite est produit hors compose par le build (ingest/), ~1×/an.
 # Monté en lecture seule : aucun volume en écriture n'est requis pour le
-# service. cloudflared est l'unique point d'entrée public (aucun port n'est
-# publié sur l'hôte) — voir docs/deploiement.md pour la configuration
-# initiale du tunnel (CLOUDFLARE_TUNNEL_TOKEN, à placer dans un .env local,
-# jamais commité).
+# service.
+#
+# Reverse proxy et tunnel Cloudflare sont mutualisés entre tous les sites
+# du Pi (/home/pi/infra/), pas gérés ici. `web` rejoint le réseau externe
+# `proxy-net` (créé par infra/docker-compose.yml) pour que le nginx partagé
+# puisse l'atteindre par son nom de conteneur — voir docs/deploiement.md.
 
 services:
   api:
@@ -17,25 +19,20 @@ services:
       - ./index.sqlite:/data/index.sqlite:ro
     environment:
       DOCSTOOLS_DB_PATH: /data/index.sqlite
-    expose:
-      - "8000"
     restart: unless-stopped
 
   web:
     build:
       context: .
       dockerfile: docker/web.Dockerfile
-    expose:
-      - "80"
+    container_name: docstools_web
+    networks:
+      - default
+      - proxy-net
     depends_on:
       - api
     restart: unless-stopped
 
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    command: tunnel run
-    environment:
-      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?CLOUDFLARE_TUNNEL_TOKEN manquant — voir docs/deploiement.md}
-    depends_on:
-      - web
-    restart: unless-stopped
+networks:
+  proxy-net:
+    external: true
