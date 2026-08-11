@@ -1,5 +1,5 @@
-# Déploiement DocsTools (US-050, US-053). Voir docs/specification.md §8
-# et docs/deploiement.md pour la procédure complète.
+# Déploiement DocsTools (US-050, US-051, US-053). Voir docs/specification.md
+# §8 et docs/deploiement.md pour la procédure complète.
 #
 # index.sqlite est produit hors compose par le build (ingest/), ~1×/an.
 # Monté en lecture seule : aucun volume en écriture n'est requis pour le
@@ -9,9 +9,21 @@
 # du Pi (/home/pi/infra/), pas gérés ici. `web` rejoint le réseau externe
 # `proxy-net` (créé par infra/docker-compose.yml) pour que le nginx partagé
 # puisse l'atteindre par son nom de conteneur — voir docs/deploiement.md.
+#
+# `image:` référence les tags publiés par docker-publish.yml (US-051) sur
+# GHCR — nécessaire pour `docker compose pull` et pour que watchtower
+# détecte les nouvelles versions. `build:` reste présent pour le
+# développement local (`docker compose build`), sans dépendre de GHCR.
+#
+# watchtower surveille et redéploie automatiquement api/web dès qu'une
+# nouvelle image est publiée sur GHCR (poll toutes les 5 min) — c'est le
+# Pi qui va chercher l'information, jamais GitHub qui pousse vers le Pi :
+# aucun accès entrant ni secret SSH nécessaire (spec §8). Scopé aux seuls
+# conteneurs labellisés pour ne pas toucher aux autres sites du Pi.
 
 services:
   api:
+    image: ghcr.io/vidal-dorian/docstools-api:latest
     build:
       context: .
       dockerfile: docker/api.Dockerfile
@@ -19,9 +31,12 @@ services:
       - ./index.sqlite:/data/index.sqlite:ro
     environment:
       DOCSTOOLS_DB_PATH: /data/index.sqlite
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
     restart: unless-stopped
 
   web:
+    image: ghcr.io/vidal-dorian/docstools-web:latest
     build:
       context: .
       dockerfile: docker/web.Dockerfile
@@ -31,6 +46,19 @@ services:
       - proxy-net
     depends_on:
       - api
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    restart: unless-stopped
+
+  watchtower:
+    image: containrrr/watchtower
+    container_name: docstools_watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      WATCHTOWER_LABEL_ENABLE: "true"
+      WATCHTOWER_POLL_INTERVAL: "300"
+      WATCHTOWER_CLEANUP: "true"
     restart: unless-stopped
 
 networks:
