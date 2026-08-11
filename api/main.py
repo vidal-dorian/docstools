@@ -1,12 +1,15 @@
-"""API DocsTools : `POST /api/search` et `GET /api/versions` (US-021).
+"""API DocsTools : `POST /api/search` et `GET /api/versions` (US-021),
+filtre de version (US-023).
 
 Voir docs/specification.md, section 6. Le rerank vectoriel (US-042)
 n'existe pas encore : le tri repose uniquement sur `bm25()` (US-020) et la
 réponse porte toujours `"reranked": false`.
 
-Le filtre de version (US-023) n'est pas encore appliqué ici : `version`
-est accepté et sert uniquement à calculer `available_in_selected` par
-groupe, sans exclure aucun résultat du classement.
+Le filtre de version (spec §5) s'applique après le classement bm25, jamais
+avant — sur les résultats déjà triés, pas sur le vivier de candidats FTS5.
+Un groupe est retenu si au moins une de ses surcharges est `present` dans
+la version sélectionnée, ou si `version_confidence = 'unknown'` (mieux vaut
+un résultat non vérifié qu'un résultat manquant, spec §4).
 """
 
 from __future__ import annotations
@@ -100,7 +103,10 @@ def _signature_preview(conn: sqlite3.Connection, group_id: int) -> str:
 def search(
     request: SearchRequest, conn: sqlite3.Connection = Depends(get_connection)
 ) -> SearchResponse:
-    hits = search_groups(conn, request.q, limit=request.limit)
+    # Le classement bm25 porte sur un vivier large (spec §5 : top 150), pas
+    # sur `limit` — sinon le filtre de version réduirait un vivier déjà
+    # tronqué au lieu de filtrer un classement complet.
+    hits = search_groups(conn, request.q, limit=DEFAULT_LIMIT)
     version_id = _resolve_version_id(conn, request.version) if request.version else None
 
     results = []
@@ -129,11 +135,14 @@ def search(
             version_confidence,
         ) = row
 
-        available_in_selected = (
-            _is_available_in_version(conn, group_id, version_id)
-            if version_id is not None
-            else True
-        )
+        if version_id is None:
+            available_in_selected = True
+        else:
+            available_in_selected = _is_available_in_version(conn, group_id, version_id)
+            if not available_in_selected and version_confidence != "unknown":
+                # Absent, de façon confirmée, de la version sélectionnée —
+                # exclu du classement (spec §5), pas seulement marqué indisponible.
+                continue
 
         results.append(
             SearchResult(
@@ -151,7 +160,7 @@ def search(
             )
         )
 
-    return SearchResponse(reranked=False, results=results)
+    return SearchResponse(reranked=False, results=results[: request.limit])
 
 
 @app.get("/api/versions", response_model=list[VersionOut])
