@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.0](https://github.com/vidal-dorian/docstools/compare/docstools-v0.3.0...docstools-v0.4.0) (2026-08-11)
+
+
+### Features
+
+* **ingest:** alimente group_fts et ajoute optimize_fts (US-016) ([b05e92e](https://github.com/vidal-dorian/docstools/commit/b05e92e4dd4061cfa0b92c3789f61f8ede94bde0)), closes [#9](https://github.com/vidal-dorian/docstools/issues/9)
+* **ingest:** parse le corpus dotnet-api-docs complet (US-015) ([a9ec550](https://github.com/vidal-dorian/docstools/commit/a9ec55074deb5704d9ca372ea2c6fbe970a43b72)), closes [#8](https://github.com/vidal-dorian/docstools/issues/8)
+
 ## [0.3.0](https://github.com/vidal-dorian/docstools/compare/docstools-v0.2.0...docstools-v0.3.0) (2026-08-11)
 
 
