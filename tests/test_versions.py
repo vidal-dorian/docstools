@@ -132,3 +132,12 @@ def test_moniker_info_for_fixed_and_dynamic_net_monikers():
     assert label == ".NET 12"
     assert family == "netcore"
     assert sort_order == 112
+
+
+def test_moniker_info_never_crashes_on_an_unrecognized_moniker():
+    # Observé sur le corpus complet : une valeur FrameworkAlternate réelle
+    # ("netframework-4", sans ".x") qui ne correspond ni à la table connue
+    # ni au format net-N.0 attendu — moniker_info doit rester défensive.
+    assert moniker_info("netframework-4") == ("netframework-4", "unknown", 999)
+    assert moniker_info("net-") == ("net-", "unknown", 999)
+    assert moniker_info("net-abc") == ("net-abc", "unknown", 999)
