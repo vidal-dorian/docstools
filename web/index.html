@@ -9,13 +9,18 @@
 <body>
   <header>
     <h1>DocsTools</h1>
-    <input
-      id="search-input"
-      type="search"
-      placeholder="add months to a date…"
-      autocomplete="off"
-      aria-label="Rechercher une méthode .NET"
-    />
+    <div class="controls">
+      <input
+        id="search-input"
+        type="search"
+        placeholder="add months to a date…"
+        autocomplete="off"
+        aria-label="Rechercher une méthode .NET"
+      />
+      <select id="version-select" aria-label="Filtrer par version .NET">
+        <option value="">Toutes les versions</option>
+      </select>
+    </div>
   </header>
   <main>
     <ul id="results" aria-live="polite"></ul>
