@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.6.0](https://github.com/vidal-dorian/docstools/compare/docstools-v0.5.0...docstools-v0.6.0) (2026-08-11)
+
+
+### Features
+
+* **deploy:** dockerise l'API et le front (US-050) ([52395d6](https://github.com/vidal-dorian/docstools/commit/52395d6a8b5f6551fc2b48d0c32e99ad5af11847)), closes [#22](https://github.com/vidal-dorian/docstools/issues/22)
+
+
+### Bug Fixes
+
+* **deploy:** aligne le tunnel/nginx sur l'infra mutualisée réelle du Pi ([0c2e47c](https://github.com/vidal-dorian/docstools/commit/0c2e47c657516a34d606dcf476a7368b9988f482))
+
+
+### Documentation
+
+* **deploy:** procédure de déploiement et tunnel Cloudflare (US-052, US-053) ([dbfeac5](https://github.com/vidal-dorian/docstools/commit/dbfeac54741f1a97bf1d429866a75953a5fb0e21)), closes [#24](https://github.com/vidal-dorian/docstools/issues/24) [#25](https://github.com/vidal-dorian/docstools/issues/25)
+
 ## [0.5.0](https://github.com/vidal-dorian/docstools/compare/docstools-v0.4.0...docstools-v0.5.0) (2026-08-11)
 
 
