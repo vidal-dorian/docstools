@@ -257,18 +257,21 @@ et `<paramref name="x"/>`. Elles doivent être **aplaties vers leur cible**
 (`DateTime`, `x`) et non supprimées : ce texte alimente FTS5 et les embeddings,
 il doit rester dense en mots utiles.
 
-### ⚠️ Risque à vérifier avant implémentation : les exemples de code
+### ✅ Risque mesuré (US-014) : les exemples de code
 
 Les blocs `remarks` en Markdown référencent souvent des exemples via une
-syntaxe d'inclusion (`[!code-csharp[...](~/samples/...)]`) pointant vers des
-fichiers **absents du dépôt de documentation**.
+syntaxe d'inclusion — l'actuelle `:::code language="csharp"
+source="~/snippets/...":::` (DocFX), ou l'ancienne `[!code-csharp[...](~/samples/...)]`
+— pointant vers des fichiers **absents du dépôt de documentation**.
 
-Il faut vérifier en début d'implémentation quelle proportion d'exemples est
-réellement inline. Si elle est faible, l'affichage d'exemples doit dégrader
-proprement : masquer la section et afficher un lien vers learn.microsoft.com
-plutôt que d'afficher une inclusion non résolue.
+**Mesuré** sur l'échantillon de 793 membres (DateTime, String, Math, List\<T\>,
+Enumerable — voir §11) : **0 % des sections « Examples » contiennent du code
+réellement inline.** 49,8 % pointent uniquement vers une inclusion externe
+non résolue, 50,2 % n'ont pas de section « Examples » du tout.
 
-Ne pas construire l'interface en supposant que les exemples sont toujours là.
+**Décision actée :** l'interface n'affiche jamais de section « exemple »
+embarquée — `example_code` reste `NULL` en base. Un lien vers la page
+learn.microsoft.com correspondante est affiché à la place (US-033).
 
 ### Résolution des versions
 
@@ -544,7 +547,10 @@ Aucune décision ne doit être prise sur ces points avant mesure :
 - Répartition `explicit` / `inferred` / `unknown`
 - Taille de l'index avec et sans vecteurs
 - Durée du build sur le Pi 5
-- Proportion de surcharges avec exemple de code inline
+- ~~Proportion de surcharges avec exemple de code inline~~ — **mesuré (US-014) :
+  0 % sur 793 membres échantillonnés (DateTime, String, Math, List\<T\>,
+  Enumerable) ; 49,8 % inclusion externe non résolue, 50,2 % sans section
+  Examples. Voir §4, décision actée.**
 - Latence de l'embedding client au premier chargement et ensuite
 
 ---
