@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0](https://github.com/vidal-dorian/docstools/compare/docstools-v0.2.0...docstools-v0.3.0) (2026-08-11)
+
+
+### Features
+
+* **ingest:** mesure la proportion d'exemples de code réellement inline ([6e4b935](https://github.com/vidal-dorian/docstools/commit/6e4b935bd6ffb8b3a3ad8bba117092174e29143b)), closes [#7](https://github.com/vidal-dorian/docstools/issues/7)
+* **ingest:** résolution des versions via AssemblyInfo/FrameworkAlternate ([4e354f5](https://github.com/vidal-dorian/docstools/commit/4e354f554f008e729768d8a5bbb3ec9ee5fcd5e8)), closes [#5](https://github.com/vidal-dorian/docstools/issues/5)
+
 ## [0.2.0](https://github.com/vidal-dorian/docstools/compare/docstools-v0.1.0...docstools-v0.2.0) (2026-08-10)
 
 
