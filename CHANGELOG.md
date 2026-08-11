@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/vidal-dorian/docstools/compare/docstools-v0.6.0...docstools-v0.7.0) (2026-08-11)
+
+
+### Features
+
+* **deploy:** déploiement automatique via watchtower (pull-based) ([d446ae1](https://github.com/vidal-dorian/docstools/commit/d446ae172f9a31b56154e5f6815c30025bda26cf))
+
 ## [0.6.0](https://github.com/vidal-dorian/docstools/compare/docstools-v0.5.0...docstools-v0.6.0) (2026-08-11)
 
 
