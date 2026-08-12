@@ -58,6 +58,15 @@ header h1 {
   color: inherit;
 }
 
+/* La popup native d'un <select> n'hérite pas du fond transparent du champ
+   fermé : sans couleurs explicites sur <option>, le navigateur peut peindre
+   son propre fond (souvent clair) sous un texte resté "inherit" (souvent
+   clair aussi en thème sombre), rendant les options illisibles. */
+#version-select option {
+  background-color: Canvas;
+  color: CanvasText;
+}
+
 #results {
   list-style: none;
   margin: var(--gap) 0 0;
