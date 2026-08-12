@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.8.1](https://github.com/vidal-dorian/docstools/compare/docstools-v0.8.0...docstools-v0.8.1) (2026-08-12)
+
+
+### Bug Fixes
+
+* **ingest:** doc_url d'un membre d'énum pointe vers la page du type ([614bf6a](https://github.com/vidal-dorian/docstools/commit/614bf6a924ba6c5aa7c218065cd06c414611f4bd))
+* **ingest:** doc_url d'un membre d'énum pointe vers la page du type ([e934d71](https://github.com/vidal-dorian/docstools/commit/e934d71340c11a6a12fe12f17b13ba3f5988a330))
+* **web:** ajoute highlight.js à l'image Docker (site cassé en production) ([3cc766a](https://github.com/vidal-dorian/docstools/commit/3cc766aa729877a5e0a6624a25f95bc2d15764b1))
+* **web:** ajoute highlight.js à l'image Docker (site cassé en production) ([d71cf06](https://github.com/vidal-dorian/docstools/commit/d71cf064ac5706dc96a17f5ac19b320bec73ea44))
+* **web:** désactive le cache long des assets statiques (style.css/app.js) ([2796389](https://github.com/vidal-dorian/docstools/commit/27963891325d7a9adbf87c696ebe4d4b43117aee))
+* **web:** désactive le cache long des assets statiques (style.css/app.js) ([ce85ee9](https://github.com/vidal-dorian/docstools/commit/ce85ee9ef99e3373015fde3e723af5c5365eb275))
+
+
+### Documentation
+
+* **recherches-ratees:** consigne 4 nouveaux cas (US-040, 12/15) ([a45dd71](https://github.com/vidal-dorian/docstools/commit/a45dd71a90147294cdbb05e11bda2a866a6d43e8))
+* **recherches-ratees:** consigne 4 nouveaux cas (US-040, 12/15) ([6c04905](https://github.com/vidal-dorian/docstools/commit/6c04905a1776c41089b6d290547d33d07be11efb))
+
 ## [0.8.0](https://github.com/vidal-dorian/docstools/compare/docstools-v0.7.1...docstools-v0.8.0) (2026-08-12)
 
 
