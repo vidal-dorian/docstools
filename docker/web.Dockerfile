@@ -4,5 +4,5 @@
 
 FROM nginx:alpine
 
-COPY web/index.html web/app.js web/style.css web/markdown.js /usr/share/nginx/html/
+COPY web/index.html web/app.js web/style.css web/markdown.js web/highlight.js /usr/share/nginx/html/
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
