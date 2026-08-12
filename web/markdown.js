@@ -205,6 +205,6 @@ function inlineToHtml(text) {
   return working.replace(CODE_PLACEHOLDER_RE, (_, idx) => `<code>${codeSpans[idx]}</code>`);
 }
 
-function escapeHtml(text) {
+export function escapeHtml(text) {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }

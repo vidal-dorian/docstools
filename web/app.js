@@ -3,6 +3,7 @@
 // Voir docs/specification.md, section 7 — pas de framework, page statique.
 
 import { renderRemarksMarkdown } from "./markdown.js";
+import { highlightCSharp } from "./highlight.js";
 
 const DEBOUNCE_MS = 300;
 const SEARCH_ENDPOINT = "/api/search";
@@ -225,7 +226,9 @@ function renderOverload(overload) {
 
   const signature = document.createElement("pre");
   signature.className = "overload-signature";
-  signature.textContent = overload.signature;
+  // highlightCSharp() échappe tout le texte source avant de générer ses
+  // propres balises : pas de contenu utilisateur non maîtrisé ici.
+  signature.innerHTML = highlightCSharp(overload.signature);
   article.appendChild(signature);
 
   if (overload.params.length > 0) {
@@ -293,7 +296,9 @@ function renderOverload(overload) {
   if (overload.example_code) {
     const example = document.createElement("pre");
     example.className = "overload-example";
-    example.textContent = overload.example_code;
+    // highlightCSharp() échappe tout le texte source avant de générer ses
+    // propres balises : pas de contenu utilisateur non maîtrisé ici.
+    example.innerHTML = highlightCSharp(overload.example_code);
     article.appendChild(example);
   } else {
     // Aucun exemple inline disponible (US-014) : un lien remplace la
