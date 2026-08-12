@@ -32,6 +32,24 @@ NO_CS_SIGNATURE_XML = """
 """
 
 
+# Cas réel remonté par un utilisateur : le doc_url d'un membre d'énum ne
+# doit pas pointer vers une page dédiée (celle-ci n'existe pas sur
+# learn.microsoft.com, contrairement aux méthodes/propriétés — 404).
+ENUM_XML = """
+<Type Name="Color" FullName="System.Color">
+  <TypeSignature Language="C#" Value="public enum Color" />
+  <Docs><summary>A color.</summary></Docs>
+  <Members>
+    <Member MemberName="Red">
+      <MemberSignature Language="C#" Value="Red = 0;" />
+      <MemberType>Field</MemberType>
+      <Docs><summary>Red.</summary></Docs>
+    </Member>
+  </Members>
+</Type>
+"""
+
+
 @pytest.fixture(scope="module")
 def datetime_type():
     return parse_type(FIXTURE_PATH.read_text(encoding="utf-8"))
@@ -208,6 +226,34 @@ def test_load_type_serializes_params_and_exceptions_as_json(tmp_path, datetime_t
         assert remarks_md is not None and remarks_md.startswith("## Remarks")
         assert return_type == "System.DateTime"
         assert returns_doc is not None
+    finally:
+        conn.close()
+
+
+def test_enum_member_doc_url_falls_back_to_the_type_page(tmp_path):
+    db_path = tmp_path / "index.sqlite"
+    create_schema(db_path)
+    parsed = parse_type(ENUM_XML)
+
+    conn = sqlite3.connect(db_path)
+    try:
+        load_type(conn, parsed)
+
+        type_doc_url = conn.execute(
+            "SELECT doc_url FROM type WHERE full_name = ?", ("System.Color",)
+        ).fetchone()[0]
+        group_doc_url = conn.execute(
+            "SELECT doc_url FROM member_group WHERE name = ?", ("Red",)
+        ).fetchone()[0]
+        overload_doc_url = conn.execute(
+            "SELECT o.doc_url FROM overload o "
+            "JOIN member_group g ON g.id = o.group_id WHERE g.name = ?",
+            ("Red",),
+        ).fetchone()[0]
+
+        assert type_doc_url == "https://learn.microsoft.com/dotnet/api/system.color"
+        assert group_doc_url == type_doc_url
+        assert overload_doc_url == type_doc_url
     finally:
         conn.close()
 

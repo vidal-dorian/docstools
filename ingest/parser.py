@@ -370,7 +370,16 @@ def load_type(
     ).lastrowid
 
     for group in parsed.groups:
-        group_doc_url = _doc_url(f"{parsed.full_name}.{group.name}")
+        # Les membres d'une énumération n'ont pas de page dédiée sur
+        # learn.microsoft.com (contrairement aux méthodes/propriétés) : ils
+        # sont documentés comme lignes d'un tableau sur la page du type. Un
+        # doc_url construit sur le même modèle que pour un membre normal
+        # pointe donc vers une page inexistante (404, remonté par un
+        # utilisateur sur EventFieldFormat.String) — on retombe sur la page
+        # du type, qui existe toujours.
+        group_doc_url = (
+            type_doc_url if parsed.kind == "enum" else _doc_url(f"{parsed.full_name}.{group.name}")
+        )
         group_row = (
             type_id,
             group.name,
