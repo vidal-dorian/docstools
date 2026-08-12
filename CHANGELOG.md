@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.7.1](https://github.com/vidal-dorian/docstools/compare/docstools-v0.7.0...docstools-v0.7.1) (2026-08-11)
+
+
+### Bug Fixes
+
+* **ingest:** moniker_info ne plante plus sur un moniker inconnu ([d896f96](https://github.com/vidal-dorian/docstools/commit/d896f96c647f80d627910115b549844e677e7018))
+* **ingest:** moniker_info ne plante plus sur un moniker inconnu ([329d549](https://github.com/vidal-dorian/docstools/commit/329d549f5095862f11b787eb1c45b49284b3a021))
+
+
+### Documentation
+
+* **deploy:** ajoute nohup en repli si tmux n'est pas installé ([8867ad5](https://github.com/vidal-dorian/docstools/commit/8867ad5ac16a689e942d96719d558b7fb4806cc3))
+* **deploy:** ajoute nohup en repli si tmux n'est pas installé ([6f1803f](https://github.com/vidal-dorian/docstools/commit/6f1803fc5c77b54d6a14df9c3328ecf49a23fb60))
+* **deploy:** clarifie où cloner le dépôt sur le Pi ([84e7fe1](https://github.com/vidal-dorian/docstools/commit/84e7fe1e0ca92e3ba4cc21bc042aa95f947074ed))
+* **deploy:** clarifie où cloner le dépôt sur le Pi ([3554f21](https://github.com/vidal-dorian/docstools/commit/3554f21e17bf5012715fb838b671b8c039fb261b))
+* **deploy:** réécrit la procédure en pas à pas explicite ([8934c5c](https://github.com/vidal-dorian/docstools/commit/8934c5c5a48de504fc889a9a40bd40e9d27736f4))
+* **deploy:** réécrit la procédure en pas à pas explicite ([3240120](https://github.com/vidal-dorian/docstools/commit/324012019afd9ec393f71dda96a5f7d07fa2f38e))
+
 ## [0.7.0](https://github.com/vidal-dorian/docstools/compare/docstools-v0.6.0...docstools-v0.7.0) (2026-08-11)
 
 
