@@ -2,6 +2,19 @@
   color-scheme: light dark;
   --gap: 0.75rem;
   --border: color-mix(in srgb, currentColor 20%, transparent);
+  --tok-keyword: #1d4ed8;
+  --tok-string: #15803d;
+  --tok-comment: #6b7280;
+  --tok-number: #b45309;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --tok-keyword: #7dd3fc;
+    --tok-string: #86efac;
+    --tok-comment: #9ca3af;
+    --tok-number: #fcd34d;
+  }
 }
 
 * {
@@ -10,14 +23,14 @@
 
 body {
   font-family: system-ui, sans-serif;
-  max-width: 1100px;
+  max-width: min(1800px, 85vw);
   margin: 0 auto;
   padding: 1.5rem;
 }
 
 main {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 4fr) minmax(0, 5fr);
   gap: 1.5rem;
   align-items: start;
 }
@@ -186,9 +199,27 @@ header h1 {
 .overload-signature {
   font-family: ui-monospace, monospace;
   font-size: 0.9rem;
-  white-space: pre-wrap;
-  word-break: break-word;
+  white-space: pre;
+  overflow-x: auto;
   margin: 0;
+}
+
+.tok-keyword {
+  color: var(--tok-keyword);
+  font-weight: 600;
+}
+
+.tok-string {
+  color: var(--tok-string);
+}
+
+.tok-comment {
+  color: var(--tok-comment);
+  font-style: italic;
+}
+
+.tok-number {
+  color: var(--tok-number);
 }
 
 .overload-params {
@@ -252,8 +283,8 @@ header h1 {
 .overload-example {
   font-family: ui-monospace, monospace;
   font-size: 0.85rem;
-  white-space: pre-wrap;
-  word-break: break-word;
+  white-space: pre;
+  overflow-x: auto;
   background: color-mix(in srgb, currentColor 6%, transparent);
   padding: 0.6rem 0.8rem;
   border-radius: 0.4rem;
