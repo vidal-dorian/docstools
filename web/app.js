@@ -15,6 +15,7 @@ const input = document.getElementById("search-input");
 const versionSelect = document.getElementById("version-select");
 const resultsEl = document.getElementById("results");
 const detailEl = document.getElementById("detail");
+const searchStatusEl = document.getElementById("search-status");
 
 let debounceTimer = null;
 let activeController = null;
@@ -61,6 +62,8 @@ input.addEventListener("input", () => {
 
   if (!query) {
     activeController?.abort();
+    activeController = null;
+    setSearchStatus("");
     renderResults([]);
     return;
   }
@@ -80,7 +83,9 @@ versionSelect.addEventListener("change", () => {
 
 async function runSearch(query) {
   activeController?.abort();
-  activeController = new AbortController();
+  const controller = new AbortController();
+  activeController = controller;
+  setSearchStatus("Recherche…");
 
   const body = { q: query };
   if (versionSelect.value) {
@@ -93,21 +98,37 @@ async function runSearch(query) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
-      signal: activeController.signal,
+      signal: controller.signal,
     });
   } catch (error) {
+    // Recherche remplacée par une plus récente (debounce/saisie) : celle-ci
+    // gère déjà son propre statut, ne pas y toucher ici.
     if (error.name === "AbortError") return;
     renderError();
+    clearSearchStatusIfActive(controller);
     return;
   }
 
   if (!response.ok) {
     renderError();
+    clearSearchStatusIfActive(controller);
     return;
   }
 
   const data = await response.json();
   renderResults(data.results);
+  clearSearchStatusIfActive(controller);
+}
+
+function setSearchStatus(text) {
+  searchStatusEl.textContent = text;
+  searchStatusEl.classList.toggle("search-status-active", Boolean(text));
+}
+
+function clearSearchStatusIfActive(controller) {
+  if (activeController === controller) {
+    setSearchStatus("");
+  }
 }
 
 function renderResults(results) {
