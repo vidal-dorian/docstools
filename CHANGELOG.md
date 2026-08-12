@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.8.0](https://github.com/vidal-dorian/docstools/compare/docstools-v0.7.1...docstools-v0.8.0) (2026-08-12)
+
+
+### Features
+
+* **web:** affiche un indicateur pendant la recherche (US-034) ([abfe81a](https://github.com/vidal-dorian/docstools/commit/abfe81a398f0c2df6d0ed686a5c4984d0e4e0dde))
+* **web:** affiche un indicateur pendant la recherche (US-034) ([e9e8532](https://github.com/vidal-dorian/docstools/commit/e9e8532b2fbf3393eb2ba522a6737250b8bce803))
+* **web:** coloration syntaxique C# et interface plus large (US-035) ([b4cacc6](https://github.com/vidal-dorian/docstools/commit/b4cacc636dfb2da531999449215ec23b84fc98ec))
+
+
+### Bug Fixes
+
+* **web:** corrige le contraste des options du sélecteur de version (US-035) ([7ba58ed](https://github.com/vidal-dorian/docstools/commit/7ba58ed9f8a942124a6fe52a3e3bb937058d1c63))
+* **web:** corrige plusieurs problèmes d'interface (US-035) ([5956258](https://github.com/vidal-dorian/docstools/commit/595625810a96a2c2a95f28a77c495ea26abcbbab))
+* **web:** wrap les noms de méthode longs, panneau de détail toujours visible (US-035) ([71f40a8](https://github.com/vidal-dorian/docstools/commit/71f40a887cc19ff8f463c33c809b87c330e77111))
+
 ## [0.7.1](https://github.com/vidal-dorian/docstools/compare/docstools-v0.7.0...docstools-v0.7.1) (2026-08-11)
 
 
